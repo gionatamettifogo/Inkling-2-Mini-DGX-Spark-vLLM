@@ -1,0 +1,46 @@
+name: inkling2-mini
+services:
+  inkling2-mini:
+    image: ${VLLM_IMAGE:-vllm/vllm-openai:inkling-2-mini}
+    entrypoint: ["vllm", "serve"]
+    restart: unless-stopped
+    network_mode: host
+    ipc: host
+    gpus: all
+    privileged: true
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      HF_HUB_DISABLE_XET: "1"
+      VLLM_ENGINE_READY_TIMEOUT_S: ${VLLM_ENGINE_READY_TIMEOUT_S:-1800}
+      LLM_API_KEY: ${LLM_API_KEY:?Set LLM_API_KEY in .env}
+    volumes:
+      - ${HF_CACHE_DIRECTORY:-/home/developer/.cache/huggingface}:/root/.cache/huggingface
+    command:
+      - ${MODEL_ID:-thinkingmachines/Inkling-2-Mini}
+      - --served-model-name
+      - thinkingmachines/Inkling-2-Mini
+      - --host
+      - 0.0.0.0
+      - --port
+      - ${PORT:-8896}
+      - --api-key
+      - ${LLM_API_KEY}
+      - --tensor-parallel-size
+      - "1"
+      - --max-model-len
+      - ${MAX_MODEL_LEN:-262144}
+      - --gpu-memory-utilization
+      - ${GPU_MEMORY_UTILIZATION:-0.60}
+      - --kv-cache-memory
+      - ${KV_CACHE_MEMORY:-42949672960}
+      - --reasoning-parser
+      - inkling
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python3 -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:${PORT:-8896}/v1/models", headers={"Authorization": "Bearer " + os.environ["LLM_API_KEY"]}); urllib.request.urlopen(req, timeout=10)'
+      start_period: 1800s
+      interval: 60s
+      timeout: 15s
+      retries: 5
