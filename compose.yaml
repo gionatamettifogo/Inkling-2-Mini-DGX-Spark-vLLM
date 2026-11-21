@@ -14,7 +14,7 @@ services:
       VLLM_ENGINE_READY_TIMEOUT_S: ${VLLM_ENGINE_READY_TIMEOUT_S:-1800}
       LLM_API_KEY: ${LLM_API_KEY:?Set LLM_API_KEY in .env}
     volumes:
-      - ${HF_CACHE_DIRECTORY:-/home/developer/.cache/huggingface}:/root/.cache/huggingface
+      - ${HF_CACHE_DIRECTORY:-${HOME}/.cache/huggingface}:/root/.cache/huggingface
     command:
       - ${MODEL_ID:-thinkingmachines/Inkling-2-Mini}
       - --served-model-name
